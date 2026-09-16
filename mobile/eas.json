@@ -5,12 +5,12 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://sas-backend.onrender.com/api"
+        "EXPO_PUBLIC_API_URL": "https://saslive.vercel.app/api"
       }
     },
     "production": {
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://sas-backend.onrender.com/api"
+        "EXPO_PUBLIC_API_URL": "https://saslive.vercel.app/api"
       }
     }
   }
