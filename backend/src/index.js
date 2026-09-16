@@ -35,6 +35,31 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'SAS Backend is running' });
 });
 
+// Serve frontend static files if available
+const path = require('path');
+const fs = require('fs');
+
+const staticDirs = [
+  path.resolve(__dirname, '../../public'),
+  path.resolve(__dirname, '../../frontend/dist'),
+  path.resolve(__dirname, '../../dist')
+];
+
+for (const dir of staticDirs) {
+  if (fs.existsSync(dir)) {
+    app.use(express.static(dir));
+    app.get('*', (req, res, next) => {
+      if (req.path.startsWith('/api')) return next();
+      const indexFile = path.join(dir, 'index.html');
+      if (fs.existsSync(indexFile)) {
+        return res.sendFile(indexFile);
+      }
+      next();
+    });
+    break;
+  }
+}
+
 if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);

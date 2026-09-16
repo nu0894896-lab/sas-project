@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "node -e \"const { execSync } = require('child_process'), fs = require('fs'); if (fs.existsSync('frontend')) { execSync('npm --prefix frontend run build', {stdio:'inherit'}); try { fs.cpSync('frontend/dist', 'dist', {recursive:true}); } catch(e){} } else { execSync('npx vite build', {stdio:'inherit'}); try { fs.mkdirSync('frontend', {recursive:true}); fs.cpSync('dist', 'frontend/dist', {recursive:true}); } catch(e){} }\"",
+    "build": "node -e \"const { execSync } = require('child_process'), fs = require('fs'); if (fs.existsSync('frontend')) { execSync('npm --prefix frontend run build', {stdio:'inherit'}); try { fs.cpSync('frontend/dist', 'dist', {recursive:true}); fs.cpSync('frontend/dist', 'public', {recursive:true}); } catch(e){} } else { execSync('npx vite build', {stdio:'inherit'}); try { fs.mkdirSync('frontend', {recursive:true}); fs.cpSync('dist', 'frontend/dist', {recursive:true}); fs.cpSync('dist', 'public', {recursive:true}); } catch(e){} }\"",
     "postinstall": "npm --prefix frontend install"
   },
   "dependencies": {
