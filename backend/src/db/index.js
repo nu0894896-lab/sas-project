@@ -50,7 +50,31 @@ if (dbUrl) {
   const db = new sqlite3.Database(dbPath);
   db.run("PRAGMA foreign_keys = ON;");
 
-  queryFunction = (text, params = []) => {
+  let initPromise = null;
+  const ensureInit = () => {
+    if (initPromise) return initPromise;
+    initPromise = new Promise((resolve) => {
+      db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='users'", (err, row) => {
+        if (!err && row) {
+          return resolve();
+        }
+        const schemaPath = path.resolve(__dirname, 'init.sql');
+        if (fs.existsSync(schemaPath)) {
+          const schema = fs.readFileSync(schemaPath, 'utf8');
+          db.exec(schema, (execErr) => {
+            if (execErr) console.error('Error auto-initializing schema in SQLite:', execErr);
+            resolve();
+          });
+        } else {
+          resolve();
+        }
+      });
+    });
+    return initPromise;
+  };
+
+  queryFunction = async (text, params = []) => {
+    await ensureInit();
     return new Promise((resolve, reject) => {
       let sqliteQuery = text.replace(/\$\d+/g, '?');
 

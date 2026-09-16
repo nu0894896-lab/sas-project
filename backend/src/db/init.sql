@@ -65,3 +65,20 @@ CREATE TABLE IF NOT EXISTS attendance_records (
     marked_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     UNIQUE (session_id, student_id)
 );
+
+-- Default Initial Accounts
+INSERT OR IGNORE INTO users (id, name, email, password_hash, role, status) 
+VALUES (1, 'System Admin', 'admin@example.com', '$2a$10$BVN14wvxTKdCYXy62rBcHe1/3eAunJLWSp4kF1BYVjNAZFHfMf9tO', 'admin', 'active');
+
+INSERT OR IGNORE INTO users (id, name, email, password_hash, role, status) 
+VALUES (2, 'Test Teacher', 'teacher1@example.com', '$2a$10$BVN14wvxTKdCYXy62rBcHe1/3eAunJLWSp4kF1BYVjNAZFHfMf9tO', 'teacher', 'active');
+
+INSERT OR IGNORE INTO teachers (id, user_id, employee_id, department)
+VALUES (1, 2, 'T-1001', 'Computer Science');
+
+INSERT OR IGNORE INTO users (id, name, email, password_hash, role, status) 
+VALUES (3, 'Test Student', 'student1@example.com', '$2a$10$BVN14wvxTKdCYXy62rBcHe1/3eAunJLWSp4kF1BYVjNAZFHfMf9tO', 'student', 'active');
+
+INSERT OR IGNORE INTO students (id, user_id, registration_number, department)
+VALUES (1, 3, 'S-2023-001', 'Computer Science');
+

@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const JWT_SECRET = process.env.JWT_SECRET || 'sas_secure_jwt_secret_key_2026';
 
 const protect = (req, res, next) => {
   let token;
@@ -12,7 +13,7 @@ const protect = (req, res, next) => {
       token = req.headers.authorization.split(' ')[1];
 
       // Verify token
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const decoded = jwt.verify(token, JWT_SECRET);
 
       // Add user payload to request object
       req.user = decoded;
