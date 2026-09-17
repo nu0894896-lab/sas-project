@@ -25,8 +25,11 @@ const markAttendance = async (req, res) => {
       return res.status(404).json({ message: 'Session not found' });
     }
     const session = sessionResult.rows[0];
-    if (session.status !== 'active') {
-      return res.status(400).json({ message: 'Session expired' });
+    if (session.status !== 'active' || (session.end_time && new Date() > new Date(session.end_time))) {
+      if (session.status === 'active') {
+        await db.query("UPDATE attendance_sessions SET status = 'ended' WHERE id = $1", [session_id]);
+      }
+      return res.status(400).json({ message: 'Session has ended or expired' });
     }
 
     // 3. Perform Verifications (Proximity, Biometric, Device)
