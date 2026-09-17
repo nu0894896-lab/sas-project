@@ -2,6 +2,7 @@
   "expo": {
     "name": "SAS Student App",
     "slug": "sas-student-app",
+    "owner": "na2.3",
     "version": "1.0.0",
     "sdkVersion": "57.0.0",
     "orientation": "portrait",
@@ -27,6 +28,11 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "aa6dbd6e-5921-4d88-981e-7f5e50cf5b98"
+      }
     }
   }
 }
