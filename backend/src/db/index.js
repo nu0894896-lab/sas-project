@@ -14,7 +14,101 @@ if (dbUrl) {
     ssl: { rejectUnauthorized: false }
   });
 
+  let pgInitPromise = null;
+  const ensurePostgresInit = async () => {
+    if (pgInitPromise) return pgInitPromise;
+    pgInitPromise = (async () => {
+      try {
+        const check = await pool.query("SELECT to_regclass('public.users') as tbl;");
+        if (!check.rows[0].tbl) {
+          await pool.query(`
+            CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                email VARCHAR(255) UNIQUE NOT NULL,
+                password_hash VARCHAR(255) NOT NULL,
+                role VARCHAR(50) NOT NULL,
+                status VARCHAR(50) DEFAULT 'active',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+            CREATE TABLE IF NOT EXISTS students (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                registration_number VARCHAR(100) UNIQUE NOT NULL,
+                department VARCHAR(100)
+            );
+            CREATE TABLE IF NOT EXISTS teachers (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                employee_id VARCHAR(100) UNIQUE NOT NULL,
+                department VARCHAR(100)
+            );
+            CREATE TABLE IF NOT EXISTS courses (
+                id SERIAL PRIMARY KEY,
+                course_code VARCHAR(50) UNIQUE NOT NULL,
+                course_name VARCHAR(255) NOT NULL,
+                teacher_id INTEGER REFERENCES teachers(id) ON DELETE SET NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+            CREATE TABLE IF NOT EXISTS enrollments (
+                id SERIAL PRIMARY KEY,
+                student_id INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+                course_id INTEGER NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+                enrolled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE (student_id, course_id)
+            );
+            CREATE TABLE IF NOT EXISTS devices (
+                id SERIAL PRIMARY KEY,
+                student_id INTEGER UNIQUE NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+                device_identifier VARCHAR(255) UNIQUE NOT NULL,
+                device_model VARCHAR(255),
+                status VARCHAR(50) DEFAULT 'active',
+                registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+            CREATE TABLE IF NOT EXISTS attendance_sessions (
+                id SERIAL PRIMARY KEY,
+                course_id INTEGER NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+                teacher_id INTEGER NOT NULL REFERENCES teachers(id) ON DELETE CASCADE,
+                proximity_token VARCHAR(255) NOT NULL,
+                status VARCHAR(50) DEFAULT 'active',
+                start_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                end_time TIMESTAMP
+            );
+            CREATE TABLE IF NOT EXISTS attendance_records (
+                id SERIAL PRIMARY KEY,
+                session_id INTEGER NOT NULL REFERENCES attendance_sessions(id) ON DELETE CASCADE,
+                student_id INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+                status VARCHAR(50) NOT NULL,
+                marked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE (session_id, student_id)
+            );
+            INSERT INTO users (id, name, email, password_hash, role, status)
+            VALUES 
+            (1, 'System Admin', 'admin@example.com', '$2a$10$BVN14wvxTKdCYXy62rBcHe1/3eAunJLWSp4kF1BYVjNAZFHfMf9tO', 'admin', 'active'),
+            (2, 'Test Teacher', 'teacher1@example.com', '$2a$10$BVN14wvxTKdCYXy62rBcHe1/3eAunJLWSp4kF1BYVjNAZFHfMf9tO', 'teacher', 'active'),
+            (3, 'Test Student', 'student1@example.com', '$2a$10$BVN14wvxTKdCYXy62rBcHe1/3eAunJLWSp4kF1BYVjNAZFHfMf9tO', 'student', 'active')
+            ON CONFLICT (email) DO NOTHING;
+
+            INSERT INTO teachers (user_id, employee_id, department)
+            VALUES (2, 'T-1001', 'Computer Science')
+            ON CONFLICT (employee_id) DO NOTHING;
+
+            INSERT INTO students (user_id, registration_number, department)
+            VALUES (3, 'S-2023-001', 'Computer Science')
+            ON CONFLICT (registration_number) DO NOTHING;
+
+            SELECT setval(pg_get_serial_sequence('users', 'id'), COALESCE(MAX(id), 1)) FROM users;
+          `);
+        }
+      } catch (e) {
+        console.error('PostgreSQL auto-init error:', e);
+      }
+    })();
+    return pgInitPromise;
+  };
+
   queryFunction = async (text, params = []) => {
+    await ensurePostgresInit();
     return await pool.query(text, params);
   };
 } else {
