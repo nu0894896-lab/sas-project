@@ -5,13 +5,13 @@ const bcrypt = require('bcryptjs');
 // @route   POST /api/admin/users
 // @access  Private/Admin
 const createUser = async (req, res) => {
-  const { name, email, password, role, registration_number, department } = req.body;
+  const { name, email, password, role, registration_number, department, employee_id } = req.body;
 
   try {
     // Check if user exists
     const userExists = await db.query('SELECT * FROM users WHERE email = $1', [email]);
     if (userExists.rows.length > 0) {
-      return res.status(400).json({ message: 'User already exists' });
+      return res.status(400).json({ message: 'User already exists with this email' });
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -30,17 +30,18 @@ const createUser = async (req, res) => {
     // Create profile based on role
     if (role === 'student') {
       if (!registration_number) {
-        await db.query('ROLLBACK');
+        try { await db.query('ROLLBACK'); } catch (e) {}
         return res.status(400).json({ message: 'Registration number is required for students' });
       }
       await db.query(
-        'INSERT INTO students (user_id, registration_number) VALUES ($1, $2)',
-        [newUser.id, registration_number]
+        'INSERT INTO students (user_id, registration_number, department) VALUES ($1, $2, $3)',
+        [newUser.id, registration_number, department || null]
       );
     } else if (role === 'teacher') {
+      const empId = employee_id?.trim() || `T-${1000 + newUser.id}-${Math.floor(100 + Math.random() * 900)}`;
       await db.query(
-        'INSERT INTO teachers (user_id, department) VALUES ($1, $2)',
-        [newUser.id, department || null]
+        'INSERT INTO teachers (user_id, employee_id, department) VALUES ($1, $2, $3)',
+        [newUser.id, empId, department || null]
       );
     }
 
@@ -48,9 +49,9 @@ const createUser = async (req, res) => {
     res.status(201).json(newUser);
 
   } catch (error) {
-    await db.query('ROLLBACK');
+    try { await db.query('ROLLBACK'); } catch (e) {}
     console.error('Create user error:', error);
-    res.status(500).json({ message: 'Server error creating user' });
+    res.status(500).json({ message: error.message || 'Server error creating user' });
   }
 };
 

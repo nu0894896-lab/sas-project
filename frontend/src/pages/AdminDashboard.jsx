@@ -9,7 +9,7 @@ export default function AdminDashboard({ user, setUser }) {
   const [devices, setDevices] = useState([]);
   const [activeTab, setActiveTab] = useState('users');
   const [newCourse, setNewCourse] = useState({ course_code: '', course_name: '', teacher_id: '' });
-  const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: 'student', registration_number: '', department: '' });
+  const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: 'student', registration_number: '', department: '', employee_id: '' });
   const [enrollment, setEnrollment] = useState({ student_id: '', course_id: '' });
   const navigate = useNavigate();
 
@@ -132,7 +132,7 @@ export default function AdminDashboard({ user, setUser }) {
         body: JSON.stringify(newUser)
       });
       if (response.ok) {
-        setNewUser({ name: '', email: '', password: '', role: 'student', registration_number: '', department: '' });
+        setNewUser({ name: '', email: '', password: '', role: 'student', registration_number: '', department: '', employee_id: '' });
         fetchUsers();
         if (newUser.role === 'student') fetchStudents();
         if (newUser.role === 'teacher') fetchTeachers();
@@ -237,7 +237,10 @@ export default function AdminDashboard({ user, setUser }) {
                   <input type="text" placeholder="Registration No." className="input" required value={newUser.registration_number} onChange={e => setNewUser({...newUser, registration_number: e.target.value})} />
                 )}
                 {newUser.role === 'teacher' && (
-                  <input type="text" placeholder="Department (Optional)" className="input" value={newUser.department} onChange={e => setNewUser({...newUser, department: e.target.value})} />
+                  <>
+                    <input type="text" placeholder="Employee ID (Optional)" className="input" value={newUser.employee_id} onChange={e => setNewUser({...newUser, employee_id: e.target.value})} />
+                    <input type="text" placeholder="Department (Optional)" className="input" value={newUser.department} onChange={e => setNewUser({...newUser, department: e.target.value})} />
+                  </>
                 )}
 
                 <button type="submit" className="btn" style={{ background: '#10b981' }}>Create User</button>
