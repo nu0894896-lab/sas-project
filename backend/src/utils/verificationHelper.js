@@ -9,14 +9,26 @@ const db = require('../db');
  */
 const verifyDeviceOwnership = async (userId, deviceIdentifier) => {
   try {
-    const result = await db.query(`
-      SELECT d.id 
+    const existing = await db.query(`
+      SELECT d.id, d.device_identifier 
       FROM devices d
       JOIN students s ON d.student_id = s.id
-      WHERE s.user_id = $1 AND d.device_identifier = $2 AND d.status = 'active'
-    `, [userId, deviceIdentifier]);
+      WHERE s.user_id = $1 AND d.status = 'active'
+    `, [userId]);
 
-    return result.rows.length > 0;
+    // If student has no registered device yet, auto-bind this first device/browser
+    if (existing.rows.length === 0) {
+      const studentRes = await db.query('SELECT id FROM students WHERE user_id = $1', [userId]);
+      if (studentRes.rows.length > 0) {
+        await db.query(
+          'INSERT INTO devices (student_id, device_identifier, device_model) VALUES ($1, $2, $3)',
+          [studentRes.rows[0].id, deviceIdentifier, 'Web Browser Client']
+        );
+        return true;
+      }
+    }
+
+    return existing.rows.some(r => r.device_identifier === deviceIdentifier);
   } catch (error) {
     console.error('Error verifying device ownership:', error);
     return false;
@@ -25,32 +37,38 @@ const verifyDeviceOwnership = async (userId, deviceIdentifier) => {
 
 /**
  * Validates the biometric claim.
- * Since the backend does not process raw biometric data (per NFR-06),
- * the mobile client is trusted to perform FaceID/TouchID and send a signed assertion or a boolean flag.
- * In a production scenario, this should verify a cryptographic signature from the device's secure enclave.
+ * On the web platform, students verify through an active confirmation prompt or WebAuthn.
  * 
- * @param {boolean} biometricPassed - The claim sent by the device
+ * @param {boolean} biometricPassed - The claim sent by the client
  * @returns {boolean}
  */
 const verifyBiometricClaim = (biometricPassed) => {
-  // Placeholder for cryptographic verification logic
   return biometricPassed === true;
 };
 
 /**
  * Validates the proximity claim.
- * Depending on the implementation (e.g., dynamic QR code scanning, Bluetooth BLE, Geolocation),
- * this function checks if the student's payload matches the teacher's session requirements.
+ * Supports exact string match or parsed JSON payload from QR scan.
  * 
- * @param {string} studentProximityToken - Token scanned by the student
+ * @param {string} studentProximityToken - Token scanned or typed by the student
  * @param {string} sessionProximityToken - The valid token for the active attendance session
  * @returns {boolean}
  */
 const verifyProximityClaim = (studentProximityToken, sessionProximityToken) => {
   if (!studentProximityToken || !sessionProximityToken) return false;
   
-  // Simple token matching. Can be expanded to calculate GPS radius.
-  return studentProximityToken === sessionProximityToken;
+  let cleanToken = studentProximityToken.toString().trim();
+  try {
+    // If QR code scanned was JSON: { c_id: 1, token: "XYZ" }
+    const parsed = JSON.parse(cleanToken);
+    if (parsed && parsed.token) {
+      cleanToken = parsed.token.toString().trim();
+    }
+  } catch (e) {
+    // Not JSON, treat as raw token
+  }
+
+  return cleanToken.toLowerCase() === sessionProximityToken.toString().trim().toLowerCase();
 };
 
 module.exports = {

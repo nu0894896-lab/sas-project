@@ -330,7 +330,7 @@ export default function TeacherDashboard({ user, setUser }) {
                       </h2>
                     </div>
                     <p className="subtitle" style={{ margin: 0 }}>
-                      Students scan the QR code or enter this proximity token on their mobile app.
+                      Students scan the QR code with their web camera or enter this session code on their Student Web Portal.
                     </p>
                   </div>
 

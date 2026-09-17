@@ -71,6 +71,36 @@ export default function Login({ setUser }) {
             Sign In
           </button>
         </form>
+
+        <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid rgba(255, 255, 255, 0.1)', textAlign: 'center' }}>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '0.6rem' }}>Quick Demo Fill:</p>
+          <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button 
+              type="button" 
+              className="btn" 
+              style={{ width: 'auto', padding: '0.35rem 0.75rem', fontSize: '0.75rem', background: '#334155' }}
+              onClick={() => { setEmail('admin@example.com'); setPassword('password123'); }}
+            >
+              Admin
+            </button>
+            <button 
+              type="button" 
+              className="btn" 
+              style={{ width: 'auto', padding: '0.35rem 0.75rem', fontSize: '0.75rem', background: '#334155' }}
+              onClick={() => { setEmail('teacher1@example.com'); setPassword('password123'); }}
+            >
+              Teacher
+            </button>
+            <button 
+              type="button" 
+              className="btn" 
+              style={{ width: 'auto', padding: '0.35rem 0.75rem', fontSize: '0.75rem', background: '#334155' }}
+              onClick={() => { setEmail('student1@example.com'); setPassword('password123'); }}
+            >
+              Student
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import Login from './pages/Login'
 import AdminDashboard from './pages/AdminDashboard'
 import TeacherDashboard from './pages/TeacherDashboard'
+import StudentDashboard from './pages/StudentDashboard'
 
 function App() {
   const [user, setUser] = useState(null);
@@ -30,6 +31,12 @@ function App() {
           <Route path="/teacher" element={
             user && user.role === 'teacher' ? 
             <TeacherDashboard user={user} setUser={setUser} /> : 
+            <Navigate to="/login" />
+          } />
+
+          <Route path="/student" element={
+            user && user.role === 'student' ? 
+            <StudentDashboard user={user} setUser={setUser} /> : 
             <Navigate to="/login" />
           } />
 
